@@ -1,5 +1,6 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
+const jwt = require('jsonwebtoken');
 const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 3000;
@@ -87,6 +88,17 @@ async function run() {
       const result = await booksCollection.find(query).toArray()
       // console.log(result);
       res.send(result)
+    })
+
+    //jwt related api
+
+    app.post('/jwt', async(req, res)=> {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.SECRET,{
+        expiresIn: "1h",
+      })
+      res.send(token);
+
     })
 
     await client.db("admin").command({ ping: 1 });
