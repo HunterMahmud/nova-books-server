@@ -97,13 +97,13 @@ async function run() {
     app.post("/borrow/:id", async (req, res) => {
       const info = req.body;
       const id = req.params.id;
-      console.log(info, id);
-      
-      const query = {id: id,borrowerEmail:info.borrowerEmail };
-      console.log(query);
+      // console.log(info, id);
+
+      const query = { id: id, borrowerEmail: info.borrowerEmail };
+      // console.log(query);
       const isExist = await borrowCollection.findOne(query);
-      if(isExist){
-        return res.send({exist: true})
+      if (isExist) {
+        return res.send({ exist: true });
       }
       const borrowInfo = {
         ...info,
@@ -113,28 +113,43 @@ async function run() {
       res.send(result);
     });
 
-    //borrow to decrease the quantity by 1
-
-    app.patch("/books/:id", async (req, res) => {
+    // return borrow to delete the borrow book by id
+    app.delete("/borrow/:id", async (req, res) => {
       const id = req.params.id;
-      const category = req.body;
-      const query = { _id: new ObjectId(id) };
-      // console.log(category);
-      const updateInfo = {
-        $set: category,
-      };
-      const result = await booksCollection.updateOne(query,updateInfo)
+      console.log(id);
+      const query = {_id: new ObjectId(id)};
+      const result = await borrowCollection.deleteOne(query);
       res.send(result);
     });
 
+    //borrow to decrease/increase the quantity by 1
+
+    app.patch("/books/:id", async (req, res) => {
+      const id = req.params.id;
+      // const category = req.body;
+      const {operation} = req.body;
+      // console.log(operation);
+      const query = { _id: new ObjectId(id) };
+    
+      
+      if(operation === '+'){
+        const result = await booksCollection.findOneAndUpdate(query, { $inc: { quantity: 1 } },  { returnOriginal: false });
+        return res.send(result);
+      }
+      else{
+        const result = await booksCollection.findOneAndUpdate(query, { $inc: { quantity: -1 } },  { returnOriginal: false });
+        return res.send(result);
+      }
+    });
+
     //get all borrow books by email
-    app.get('/borrow/:email', async(req, res)=> {
+    app.get("/borrow/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
-      const query = {borrowerEmail:email};
+      // console.log(email);
+      const query = { borrowerEmail: email };
       const result = await borrowCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     //jwt related api
 
