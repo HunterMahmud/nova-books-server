@@ -127,6 +127,15 @@ async function run() {
       res.send(result);
     });
 
+    //get all borrow books by email
+    app.get('/borrow/:email', async(req, res)=> {
+      const email = req.params.email;
+      console.log(email);
+      const query = {borrowerEmail:email};
+      const result = await borrowCollection.find(query).toArray();
+      res.send(result);
+    })
+
     //jwt related api
 
     app.post("/jwt", async (req, res) => {
