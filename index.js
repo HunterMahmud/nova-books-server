@@ -61,8 +61,13 @@ async function run() {
     //load all books data
     app.get("/allBooks", verifyToken, async (req, res) => {
       // console.log(req.cookies?.token);
-
-      const result = await booksCollection.find().toArray();
+      let query = req.query;
+      // console.log(query);
+      if(query?.quantity=='0'){
+        query = { quantity: { $ne: 0 } };
+        // console.log(query);
+      }
+      const result = await booksCollection.find(query).toArray();
       res.send(result);
     });
 
