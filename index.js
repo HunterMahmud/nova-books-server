@@ -13,9 +13,11 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://nova-books.web.app",
+      "https://nova-books.firebaseapp.com",
       //other links will be here
     ],
-    // credentials: true,
+    credentials: true,
   })
 );
 
@@ -33,6 +35,22 @@ const client = new MongoClient(uri, {
   },
 });
 
+// user defined middleware
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  //console.log(token);
+  if (!token) {
+    return res.status(401).send({ message: "not authorized" });
+  }
+  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     const booksCollection = client.db("bookDB").collection("books");
@@ -41,13 +59,15 @@ async function run() {
 
     // books related api
     //load all books data
-    app.get("/allBooks", async (req, res) => {
+    app.get("/allBooks", verifyToken, async (req, res) => {
+      // console.log(req.cookies?.token);
+
       const result = await booksCollection.find().toArray();
       res.send(result);
     });
 
     // add new book info db
-    app.post("/addBook", async (req, res) => {
+    app.post("/addBook", verifyToken, async (req, res) => {
       const bookInfo = req.body;
       // console.log(bookInfo);
       const result = await booksCollection.insertOne(bookInfo);
@@ -116,8 +136,8 @@ async function run() {
     // return borrow to delete the borrow book by id
     app.delete("/borrow/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
-      const query = {_id: new ObjectId(id)};
+      //console.log(id);
+      const query = { _id: new ObjectId(id) };
       const result = await borrowCollection.deleteOne(query);
       res.send(result);
     });
@@ -127,17 +147,23 @@ async function run() {
     app.patch("/books/:id", async (req, res) => {
       const id = req.params.id;
       // const category = req.body;
-      const {operation} = req.body;
+      const { operation } = req.body;
       // console.log(operation);
       const query = { _id: new ObjectId(id) };
-    
-      
-      if(operation === '+'){
-        const result = await booksCollection.findOneAndUpdate(query, { $inc: { quantity: 1 } },  { returnOriginal: false });
+
+      if (operation === "+") {
+        const result = await booksCollection.findOneAndUpdate(
+          query,
+          { $inc: { quantity: 1 } },
+          { returnOriginal: false }
+        );
         return res.send(result);
-      }
-      else{
-        const result = await booksCollection.findOneAndUpdate(query, { $inc: { quantity: -1 } },  { returnOriginal: false });
+      } else {
+        const result = await booksCollection.findOneAndUpdate(
+          query,
+          { $inc: { quantity: -1 } },
+          { returnOriginal: false }
+        );
         return res.send(result);
       }
     });
@@ -163,13 +189,23 @@ async function run() {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       };
-      res.cookie("token", token, cookieOptions).send({ status: "success" });
+
+      res.cookie("token", token, cookieOptions).send({ success: true });
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // clearing Token
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      // console.log("logging out", user);
+      res
+        .clearCookie("token", { maxAge: 0 })
+        .send({ success: true });
+    });
+
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
   }
 }
