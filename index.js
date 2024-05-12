@@ -12,7 +12,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
+      // "http://localhost:5173",
       "https://nova-books.web.app",
       "https://nova-books.firebaseapp.com",
       //other links will be here
