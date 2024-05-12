@@ -194,11 +194,11 @@ async function run() {
     });
 
     // clearing Token
-    app.post("/logout", async (req, res) => {
-      const user = req.body;
-      // console.log("logging out", user);
+    app.get("/logout", async (req, res) => {
       res
-        .clearCookie("token", { maxAge: 0 })
+        .clearCookie("token", {
+          maxAge: 0,
+        })
         .send({ success: true });
     });
 
