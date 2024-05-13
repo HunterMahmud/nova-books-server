@@ -12,7 +12,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      // "http://localhost:5173",
+      "http://localhost:5173",
       "https://nova-books.web.app",
       "https://nova-books.firebaseapp.com",
       //other links will be here
@@ -63,7 +63,7 @@ async function run() {
       // console.log(req.cookies?.token);
       let query = req.query;
       // console.log(query);
-      if(query?.quantity=='0'){
+      if (query?.quantity == "0") {
         query = { quantity: { $ne: 0 } };
         // console.log(query);
       }
@@ -200,10 +200,13 @@ async function run() {
 
     // clearing Token
     app.get("/logout", async (req, res) => {
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      };
       res
-        .clearCookie("token", {
-          maxAge: 0,
-        })
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
         .send({ success: true });
     });
 
