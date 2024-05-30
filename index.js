@@ -7,7 +7,7 @@ require("dotenv").config();
 const port = process.env.PORT || 3000;
 
 const app = express();
-
+const validHexRegex = /^[0-9a-fA-F]{24}$/;
 //middleware
 app.use(
   cors({
@@ -20,6 +20,17 @@ app.use(
     credentials: true,
   })
 );
+
+
+//middleware for checking invalid objectID
+
+const objectIDVerify = (req, res, next)=>{
+  const id = req.params.id;
+  if(!validHexRegex.test(id)){
+    return res.status(400).send({ message: 'Invalid ObjectId' });
+  }
+  next();
+}
 
 app.use(express.json());
 app.use(cookieParser());
@@ -80,14 +91,14 @@ async function run() {
     });
 
     /// update/details page books data of single book
-    app.get("/books/:id", async (req, res) => {
+    app.get("/books/:id", objectIDVerify,async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await booksCollection.findOne(query);
       res.send(result);
     });
     //update book by id
-    app.patch("/updatebook/:id", async (req, res) => {
+    app.patch("/updatebook/:id",objectIDVerify, async (req, res) => {
       const info = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -117,14 +128,22 @@ async function run() {
       res.send(result);
     });
 
+    //read list related apis
+    app.get('/readlist/:email', async(req, res)=>{
+      const email = req.params.email;
+      const query = {borrowerEmail: email, return:true};
+      const result = await borrowCollection.find(query).toArray();
+      res.send(result);
+    })
+
     // borrowed books related api
     // borrowed books by user email saved to db
-    app.post("/borrow/:id", async (req, res) => {
+    app.post("/borrow/:id",objectIDVerify, async (req, res) => {
       const info = req.body;
       const id = req.params.id;
       // console.log(info, id);
 
-      const query = { id: id, borrowerEmail: info.borrowerEmail };
+      const query = { borrowerEmail: info.borrowerEmail, return: false };
       // console.log(query);
       const isExist = await borrowCollection.findOne(query);
       if (isExist) {
@@ -132,6 +151,7 @@ async function run() {
       }
       const borrowInfo = {
         ...info,
+        return: false
       };
       // console.log(borrowInfo);
       const result = await borrowCollection.insertOne(borrowInfo);
@@ -139,17 +159,28 @@ async function run() {
     });
 
     // return borrow to delete the borrow book by id
-    app.delete("/borrow/:id", async (req, res) => {
-      const id = req.params.id;
-      //console.log(id);
-      const query = { _id: new ObjectId(id) };
-      const result = await borrowCollection.deleteOne(query);
-      res.send(result);
-    });
+    // app.delete("/borrow/:id",objectIDVerify, async (req, res) => {
+    //   const id = req.params.id;
+    //   //console.log(id);
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await borrowCollection.deleteOne(query);
+    //   res.send(result);
+    // });
 
+    app.patch("/borrow/:id",objectIDVerify, async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updatedInfo = {
+        $set:{
+          return:true
+        }
+      }
+      const result = await borrowCollection.updateOne(query,updatedInfo);
+      res.send(result);
+    })
     //borrow to decrease/increase the quantity by 1
 
-    app.patch("/books/:id", async (req, res) => {
+    app.patch("/books/:id",objectIDVerify, async (req, res) => {
       const id = req.params.id;
       // const category = req.body;
       const { operation } = req.body;
@@ -177,7 +208,7 @@ async function run() {
     app.get("/borrow/:email", async (req, res) => {
       const email = req.params.email;
       // console.log(email);
-      const query = { borrowerEmail: email };
+      const query = { borrowerEmail: email, return:false };
       const result = await borrowCollection.find(query).toArray();
       res.send(result);
     });
