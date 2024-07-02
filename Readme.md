@@ -2,6 +2,11 @@
 
 This project is a server-side application for Nova Books, built with Node.js and Express. It uses MongoDB for the database and JSON Web Tokens (JWT) for authentication.
 
+
+**Visit the live site:** [BookShelf](https://nova-books.web.app/).
+
+[Client side repository](https://github.com/HunterMahmud/nova-books-client)
+
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
@@ -15,7 +20,7 @@ Before you begin, ensure you have met the following requirements:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/Porgramming-Hero-web-course/b9a11-server-side-HunterMahmud.git
+   git clone https://github.com/HunterMahmud/nova-books-server.git
    cd nova-books-server
    ```
 
@@ -90,6 +95,6 @@ If you have any suggestions or improvements, feel free to open an issue or submi
 
 
 ### Notes:
-- Replace `"https://github.com/Porgramming-Hero-web-course/b9a11-server-side-HunterMahmud.git"` with the actual URL of your repository.
+- Replace `"https://github.com/HunterMahmud/nova-books-server.git"` with the actual URL of your repository.
 - Ensure your MongoDB credentials and JWT secret key are correctly set in the `.env` file.
 - Adjust any additional instructions or configurations specific to your project.
